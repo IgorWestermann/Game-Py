@@ -23,7 +23,8 @@ class Level:
                     Tile((x, y), [self.visible_sprites,
                          self.obstacle_sprites])
                 if col == 'p':
-                    Player((x, y), [self.visible_sprites])
+                    self.player = Player((x, y), [self.visible_sprites])
 
     def run(self):
         self.visible_sprites.draw(self.display_surface)
+        self.visible_sprites.update()
