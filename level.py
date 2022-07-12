@@ -30,7 +30,6 @@ class Level:
             'grass': import_folder('./graphics/grass'),
             'objects': import_folder('./graphics/objects')
         }
-        print(graphics)
 
         for style, layout in layouts.items():
             for row_index, row in enumerate(layout):
@@ -54,9 +53,9 @@ class Level:
             (2000, 1430), [self.visible_sprites], self.obstacle_sprites)
 
     def run(self):
-
         self.visible_sprites.custom_draw(self.player)
         self.visible_sprites.update()
+        debug(self.player.status)
 
 
 class YSortCameraGroup(pygame.sprite.Group):
