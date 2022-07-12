@@ -13,6 +13,8 @@ class Player(pygame.sprite.Sprite):
 
         self.import_player_assets()
         self.status = 'down'
+        self.frame_index = 0
+        self.animations_speed = 0.15
 
         self.direction = pygame.math.Vector2()
         self.speed = 5
@@ -44,39 +46,40 @@ class Player(pygame.sprite.Sprite):
         print(self.animations)
 
     def input(self):
-        keys = pygame.key.get_pressed()
+        if not self.attack:
+            keys = pygame.key.get_pressed()
 
-        # move
-        if keys[pygame.K_UP]:
-            self.direction.y = -1
-            self.status = 'up'
-        elif keys[pygame.K_DOWN]:
-            self.direction.y = 1
-            self.status = 'down'
-        else:
-            self.direction.y = 0
+            # move
+            if keys[pygame.K_UP]:
+                self.direction.y = -1
+                self.status = 'up'
+            elif keys[pygame.K_DOWN]:
+                self.direction.y = 1
+                self.status = 'down'
+            else:
+                self.direction.y = 0
 
-        if keys[pygame.K_RIGHT]:
-            self.direction.x = 1
-            self.status = 'right'
-        elif keys[pygame.K_LEFT]:
-            self.direction.x = -1
-            self.status = 'left'
-        else:
-            self.direction.x = 0
+            if keys[pygame.K_RIGHT]:
+                self.direction.x = 1
+                self.status = 'right'
+            elif keys[pygame.K_LEFT]:
+                self.direction.x = -1
+                self.status = 'left'
+            else:
+                self.direction.x = 0
 
-        # attack
-        if keys[pygame.K_SPACE] and not self.attack:
-            self.attack = True
-            self.attack_time = pygame.time.get_ticks()
-            print("attack")
+            # attack
+            if keys[pygame.K_SPACE]:
+                self.attack = True
+                self.attack_time = pygame.time.get_ticks()
+                print("attack")
 
-        # jutsu
-        if keys[pygame.K_LCTRL] and not self.attack:
-            self.attack = True
-            self.attack_time = pygame.time.get_ticks()
-            # self.status += '_attack'
-            print("attack")
+            # jutsu
+            if keys[pygame.K_LCTRL]:
+                self.attack = True
+                self.attack_time = pygame.time.get_ticks()
+                # self.status += '_attack'
+                print("attack")
 
     def get_status(self):
         # idle
@@ -130,8 +133,19 @@ class Player(pygame.sprite.Sprite):
             if current_time - self.attack_time >= self.attack_cd:
                 self.attack = False
 
+    def animation(self):
+        animation = self.animations[self.status]
+
+        self.frame_index += self.animations_speed
+        if self.frame_index >= len(animation):
+            self.frame_index = 0
+
+        self.image = animation[int(self.frame_index)]
+        self.rect = self.image.get_rect(center=self.hitbox.center)
+
     def update(self):
         self.input()
         self.cooldowns()
         self.get_status()
+        self.animation()
         self.move(self.speed)
