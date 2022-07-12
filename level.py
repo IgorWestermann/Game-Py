@@ -28,7 +28,7 @@ class Level:
         }
         graphics = {
             'grass': import_folder('./graphics/grass'),
-            # 'objects': import_folder('./graphics/bola')
+            'objects': import_folder('./graphics/objects')
         }
         print(graphics)
 
@@ -45,10 +45,10 @@ class Level:
                             Tile((x, y),
                                  [self.visible_sprites, self.obstacle_sprites], 'grass', random_grass_image)
                         if style == 'object':
-                            pass
-                            # surf = graphics['objects'][int(col)]
-                            # Tile((x, y),
-                            #      [self.visible_sprites, self.obstacle_sprites], 'object', surf)
+                            # pass
+                            surf = graphics['objects'][int(col)]
+                            Tile((x, y),
+                                 [self.visible_sprites, self.obstacle_sprites], 'object', surf)
 
         self.player = Player(
             (2000, 1430), [self.visible_sprites], self.obstacle_sprites)
