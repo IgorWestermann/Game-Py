@@ -15,6 +15,12 @@ class UI:
         self.energy_bar_rect = pygame.Rect(
             10, 34, ENERGY_BAR_WIDTH, BAR_HEIGHT)
 
+        self.weapon_graphics = []
+        for weapon in weapon_data.values():
+            path = weapon['graphic']
+            weapon = pygame.image.load(path).convert_alpha()
+            self.weapon_graphics.append(weapon)
+
     def show_bar(self, current, max_amount, bg_rect, color):
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, bg_rect)
 
@@ -27,8 +33,41 @@ class UI:
         pygame.draw.rect(self.display_surface,
                          UI_BORDER_COLOR, bg_rect, 3)
 
+    def show_exp(self, exp):
+        text_surf = self.font.render(str(int(exp)), False, TEXT_COLOR)
+        x = self.display_surface.get_size()[0] - 20
+        y = self.display_surface.get_size()[1] - 20
+        text_rect = text_surf.get_rect(bottomright=(x, y))
+
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR,
+                         text_rect.inflate(20, 10))
+        self.display_surface.blit(text_surf, text_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR,
+                         text_rect.inflate(20, 10), 3)
+
+    def selecion_box(self, left, top, has_switched):
+        bg_rect = pygame.Rect(left, top, ITEM_BOX_SIZE, ITEM_BOX_SIZE)
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, bg_rect)
+        if has_switched == True:
+            pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
+        else:
+            pygame.draw.rect(self.display_surface,
+                             UI_BORDER_COLOR_ACTIVE, bg_rect, 3)
+
+        return bg_rect
+
+    def weapon_orverlay(self, weapon_index, has_switched):
+        bg_rect = self.selecion_box(30, 615, has_switched)
+        weapon_surf = self.weapon_graphics[weapon_index]
+        weapon_rect = weapon_surf.get_rect(center=bg_rect.center)
+
+        self.display_surface.blit(weapon_surf, weapon_rect)
+
     def display(self, player):
         self.show_bar(
             player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(
             player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
+        # self.selecion_box(120, 615)
+        self.weapon_orverlay(player.weapon_index, player.switch_weapon)
+        # self.show_exp(player.exp)
