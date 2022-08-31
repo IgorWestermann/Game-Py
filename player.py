@@ -1,10 +1,10 @@
-from tkinter.ttk import Style
 import pygame
+from entity import Entity
 from settings import *
 from support import import_folder
 
 
-class Player(pygame.sprite.Sprite):
+class Player(Entity):
     def __init__(self, pos, groups, obstacle_sprites, create_attack, destroy_attack, create_magic):
         super().__init__(groups)
         self.image = pygame.image.load(
@@ -15,11 +15,8 @@ class Player(pygame.sprite.Sprite):
         # graphics
         self.import_player_assets()
         self.status = 'down'
-        self.frame_index = 0
-        self.animations_speed = 0.15
 
         # movement
-        self.direction = pygame.math.Vector2()
         self.attack = False
         self.attack_cd = 400
         self.attack_time = None
@@ -53,6 +50,11 @@ class Player(pygame.sprite.Sprite):
         self.energy = self.stats['energy']
         self.speed = self.stats['speed']
         self.exp = 100
+
+        # damage
+        self.vunerable = True
+        self.hurt_time = None
+        self.vunerability_cd = 500
 
     def import_player_assets(self):
         character_path = './graphics/player/'
@@ -161,38 +163,11 @@ class Player(pygame.sprite.Sprite):
             if 'attack' in self.status:
                 self.status = self.status.replace('_attack', '')
 
-    def move(self, speed):
-        if self.direction.magnitude() != 0:
-            self.direction = self.direction.normalize()
-
-        self.hitbox.x += self.direction.x * speed
-        self.collision('horizontal')
-        self.hitbox.y += self.direction.y * speed
-        self.collision('vertical')
-        self.rect.center = self.hitbox.center
-
-    def collision(self, direction):
-        if direction == 'horizontal':
-            for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    if self.direction.x > 0:  # moving right
-                        self.hitbox.right = sprite.hitbox.left
-                    if self.direction.x < 0:  # moving left
-                        self.hitbox.left = sprite.hitbox.right
-
-        if direction == 'vertical':
-            for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    if self.direction.y > 0:  # moving down
-                        self.hitbox.bottom = sprite.hitbox.top
-                    if self.direction.y < 0:  # moving up
-                        self.hitbox.top = sprite.hitbox.bottom
-
     def cooldowns(self):
         current_time = pygame.time.get_ticks()
         # attack cooldown
         if self.attack:
-            if current_time - self.attack_time >= self.attack_cd:
+            if current_time - self.attack_time >= self.attack_cd + weapon_data[self.weapon]['cooldown']:
                 self.attack = False
                 self.destroy_attack()
 
@@ -205,15 +180,31 @@ class Player(pygame.sprite.Sprite):
             if current_time - self.magic_switch_cd >= self.switch_duration_cd:
                 self.switch_magic = True
 
+        if not self.vunerable:
+            if current_time - self.hurt_time >= self.vunerability_cd:
+                self.vunerable = True
+
     def animation(self):
         animation = self.animations[self.status]
 
-        self.frame_index += self.animations_speed
+        self.frame_index += self.animation_speed
         if self.frame_index >= len(animation):
             self.frame_index = 0
 
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
+
+        # damage animations
+        if not self.vunerable:
+            alpha = self.wave_value()
+            self.image.set_alpha(alpha)
+        else:
+            self.image.set_alpha(255)
+
+    def get_weapon_dmg(self):
+        base_dmg = self.stats['attack']
+        weapon_dmg = weapon_data[self.weapon]['damage']
+        return base_dmg + weapon_dmg
 
     def update(self):
         self.input()
