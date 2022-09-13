@@ -1,10 +1,12 @@
 import pygame
+from magic import MagicPlayer
+from particles import AnimationPlayer
 from settings import *
 from tile import Tile
 from player import Player
 from debug import debug
 from support import *
-from random import choice
+from random import choice, randint
 from weapon import Weapon
 from ui import UI
 from enemy import Enemy
@@ -30,6 +32,10 @@ class Level:
 
         # user interface
         self.ui = UI()
+
+        # particles
+        self.animation_player = AnimationPlayer()
+        self.magic_player = MagicPlayer(self.animation_player)
 
     def create_map(self):
         layouts = {
@@ -78,7 +84,7 @@ class Level:
                                 else:
                                     monster_name == 'squid'
                                 Enemy(monster_name, (x, y), [
-                                    self.visible_sprites, self.attackable_sprites], self.obstacle_sprites, self.damage_player)
+                                    self.visible_sprites, self.attackable_sprites], self.obstacle_sprites, self.damage_player, self.death_animation)
 
     def create_attack(self):
         self.current_attack = Weapon(
@@ -97,6 +103,11 @@ class Level:
                 if collision_sprites:
                     for target_sprite in collision_sprites:
                         if target_sprite.sprite_type == 'grass':
+                            pos = target_sprite.rect.center
+                            offset = pygame.math.Vector2(0, 75)
+                            for leaf in range(randint(3, 6)):
+                                self.animation_player.create_grass_particles(
+                                    pos - offset, [self.visible_sprites])
                             target_sprite.kill()
                         else:
                             target_sprite.get_damage(
@@ -107,11 +118,21 @@ class Level:
             self.player.health -= amount
             self.player.vunerable = False
             self.player.hurt_time = pygame.time.get_ticks()
+            self.animation_player.create_particles(
+                attack_type, self.player.rect.center, [self.visible_sprites])
 
     def create_magic(self, style, strength, cost):
-        print(style)
-        print(strength)
-        print(cost)
+        if style == 'heal':
+            self.magic_player.heal(self.player, strength, cost, [
+                                   self.visible_sprites])
+
+        if style == 'flame':
+            self.magic_player.flame(
+                self.player, cost, [self.visible_sprites, self.attack_sprites])
+
+    def death_animation(self, pos, particles_type):
+        self.animation_player.create_particles(
+            particles_type, pos, [self.visible_sprites])
 
     def run(self):
         self.visible_sprites.custom_draw(self.player)

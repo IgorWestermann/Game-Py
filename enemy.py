@@ -6,7 +6,7 @@ from player import Player
 
 
 class Enemy(Entity):
-    def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player):
+    def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player, death_animation):
         super().__init__(groups)
         self.sprite_type = 'enemy'
 
@@ -37,6 +37,7 @@ class Enemy(Entity):
         self.attack_time = None
         self.attack_cd = 400
         self.damage_player = damage_player
+        self.death_animation = death_animation
 
         self.vunerable = True
         self.hit_time = None
@@ -76,7 +77,7 @@ class Enemy(Entity):
     def actions(self, player):
         if self.status == 'attack':
             self.attack_time = pygame.time.get_ticks()
-            self.damage_player(self.attack_damage, self.attack_time)
+            self.damage_player(self.attack_damage, self.attack_type)
         elif self.status == 'move':
             self.direction = self.player_direction(player)[1]
         else:
@@ -116,12 +117,15 @@ class Enemy(Entity):
             if attack_type == 'weapon':
                 self.health -= player.get_weapon_dmg()
             else:
-                pass
+                self.health -= player.get_magic_dmg()
+
             self.hit_time = pygame.time.get_ticks()
             self.vunerable = False
 
     def check_death(self):
         if self.health <= 0:
+            pos = self.rect.center
+            self.death_animation(pos, self.monster_name)
             self.kill()
 
     def pushback(self):
